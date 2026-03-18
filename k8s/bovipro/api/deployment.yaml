@@ -24,14 +24,6 @@ spec:
         app: bovipro-api
     spec:
       serviceAccountName: default
-      # Volume CSI necessário para ativar o SecretProviderClass e criar bovipro-secrets
-      volumes:
-        - name: secrets-store
-          csi:
-            driver: secrets-store.csi.k8s.io
-            readOnly: true
-            volumeAttributes:
-              secretProviderClass: bovipro-kv-secrets
       containers:
         - name: api
           image: acrheckiodev.azurecr.io/bovipro-api:latest   # substituído pelo CI/CD
@@ -52,10 +44,6 @@ spec:
                 secretKeyRef:
                   name: bovipro-secrets
                   key: JWT_SECRET
-          volumeMounts:
-            - name: secrets-store
-              mountPath: /mnt/secrets
-              readOnly: true
           resources:
             requests:
               cpu: 100m

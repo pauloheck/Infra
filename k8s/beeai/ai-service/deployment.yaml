@@ -64,10 +64,10 @@ spec:
                   key: CONTENT_SAFETY_ENDPOINT
           resources:
             requests:
-              cpu: 250m
+              cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 1000m
+              cpu: 500m
               memory: 1Gi
           readinessProbe:
             httpGet:
