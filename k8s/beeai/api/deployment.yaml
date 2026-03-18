@@ -1,6 +1,6 @@
 ###############################################################################
 # Deployment — BeeAI API
-# Imagem: acrbeeaidev.azurecr.io/beeai-api:<TAG>   (substituir TAG no deploy)
+# Imagem: acrheckiodev.azurecr.io/beeai-api:<TAG>   (substituir TAG no deploy)
 ###############################################################################
 apiVersion: apps/v1
 kind: Deployment
@@ -33,7 +33,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: api
-          image: acrbeeaidev.azurecr.io/beeai-api:latest   # substituído pelo CI/CD
+          image: acrheckiodev.azurecr.io/beeai-api:latest   # substituído pelo CI/CD
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

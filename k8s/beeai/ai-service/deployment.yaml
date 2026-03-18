@@ -1,6 +1,6 @@
 ###############################################################################
 # Deployment — BeeAI AI Service (LangGraph Supervisor + MCP Tools)
-# Imagem: acrbeeaidev.azurecr.io/beeai-ai:<TAG>   (substituído pelo CI/CD)
+# Imagem: acrheckiodev.azurecr.io/beeai-ai:<TAG>   (substituído pelo CI/CD)
 # Porta interna: 8001
 # Secrets reutilizados do beeai-secrets (criado pelo secret-provider da API)
 ###############################################################################
@@ -34,7 +34,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: ai
-          image: acrbeeaidev.azurecr.io/beeai-ai:latest   # substituído pelo CI/CD
+          image: acrheckiodev.azurecr.io/beeai-ai:latest   # substituído pelo CI/CD
           imagePullPolicy: Always
           ports:
             - containerPort: 8001

@@ -34,7 +34,7 @@ spec:
               secretProviderClass: bovipro-kv-secrets
       containers:
         - name: api
-          image: acrshareddev.azurecr.io/bovipro-api:latest   # substituído pelo CI/CD
+          image: acrheckiodev.azurecr.io/bovipro-api:latest   # substituído pelo CI/CD
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

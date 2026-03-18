@@ -1,6 +1,6 @@
 ###############################################################################
 # Deployment — BeeAI Web (Next.js standalone)
-# Imagem: acrbeeaidev.azurecr.io/beeai-web:<TAG>   (substituir TAG no deploy)
+# Imagem: acrheckiodev.azurecr.io/beeai-web:<TAG>   (substituir TAG no deploy)
 # NEXT_PUBLIC_API_URL é embutido em build-time. Para trocar, rebuildar a imagem.
 ###############################################################################
 apiVersion: apps/v1
@@ -31,7 +31,7 @@ spec:
         runAsGroup: 1001
       containers:
         - name: web
-          image: acrbeeaidev.azurecr.io/beeai-web:latest   # substituído pelo CI/CD
+          image: acrheckiodev.azurecr.io/beeai-web:latest   # substituído pelo CI/CD
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
