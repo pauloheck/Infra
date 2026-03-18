@@ -1,0 +1,78 @@
+###############################################################################
+# infra-plan.yml — Terraform Plan em Pull Requests
+# Comenta o plano diretamente no PR para revisão antes do apply.
+###############################################################################
+name: "Infra: Plan"
+
+on:
+  pull_request:
+    paths:
+      - "envs/**"
+      - "modules/**"
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+  ARM_USE_OIDC:        "true"
+
+jobs:
+  plan-shared-dev:
+    name: "Plan — shared-dev"
+    runs-on: ubuntu-latest
+    environment: dev
+    defaults:
+      run:
+        working-directory: envs/shared-dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var-file="shared-dev.tfvars" \
+            -var="pg_admin_password=${{ secrets.TF_VAR_pg_admin_password }}" \
+            -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Comentar Plan no PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const output = `#### Terraform Plan — shared-dev 🗺️
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            *Acionado por @${{ github.actor }}*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });

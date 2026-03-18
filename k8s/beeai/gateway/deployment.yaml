@@ -1,0 +1,57 @@
+###############################################################################
+# Deployment — BeeAI Gateway (NGINX)
+# Único ponto de entrada público. Roteia para api, ai-service e web (ClusterIP).
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeai-gateway
+  namespace: beeai
+  labels:
+    app: beeai-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beeai-gateway
+  template:
+    metadata:
+      labels:
+        app: beeai-gateway
+    spec:
+      securityContext:
+        runAsNonRoot: false  # nginx precisa rodar como root para bind na porta 80
+      containers:
+        - name: gateway
+          image: nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /gateway-health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /gateway-health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: gateway-nginx-config

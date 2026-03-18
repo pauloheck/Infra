@@ -1,0 +1,64 @@
+###############################################################################
+# infra-destroy.yml — Destruir ambiente (MANUAL ONLY)
+# ATENÇÃO: Irreversível. Apaga todos os recursos do ambiente selecionado.
+# Requer aprovação manual via GitHub Environment Protection Rules.
+###############################################################################
+name: "Infra: Destroy"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Ambiente a destruir (shared-dev)"
+        required: true
+        default: "shared-dev"
+        type: choice
+        options:
+          - shared-dev
+      confirm:
+        description: "Digite DESTRUIR para confirmar"
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    name: "Terraform Destroy — ${{ inputs.environment }}"
+    runs-on: ubuntu-latest
+    environment: dev
+    if: inputs.confirm == 'DESTRUIR'
+
+    env:
+      TF_VAR_pg_admin_password: ${{ secrets.TF_VAR_pg_admin_password }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set ARM env vars
+        run: |
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"             >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"             >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+          echo "ARM_USE_OIDC=true"                                         >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: envs/${{ inputs.environment }}
+        run: terraform init
+
+      - name: Terraform Destroy
+        working-directory: envs/${{ inputs.environment }}
+        run: terraform destroy -var-file="${{ inputs.environment }}.tfvars" -auto-approve

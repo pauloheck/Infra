@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bovipro-web-config
+  namespace: bovipro
+data:
+  NODE_ENV: "production"
+  PORT: "3000"

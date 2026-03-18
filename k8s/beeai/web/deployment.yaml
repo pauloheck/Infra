@@ -1,0 +1,61 @@
+###############################################################################
+# Deployment — BeeAI Web (Next.js standalone)
+# Imagem: acrbeeaidev.azurecr.io/beeai-web:<TAG>   (substituir TAG no deploy)
+# NEXT_PUBLIC_API_URL é embutido em build-time. Para trocar, rebuildar a imagem.
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeai-web
+  namespace: beeai
+  labels:
+    app: beeai-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: beeai-web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: beeai-web
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: web
+          image: acrbeeaidev.azurecr.io/beeai-web:latest   # substituído pelo CI/CD
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: web-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3

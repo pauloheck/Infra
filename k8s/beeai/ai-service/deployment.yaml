@@ -1,0 +1,85 @@
+###############################################################################
+# Deployment — BeeAI AI Service (LangGraph Supervisor + MCP Tools)
+# Imagem: acrbeeaidev.azurecr.io/beeai-ai:<TAG>   (substituído pelo CI/CD)
+# Porta interna: 8001
+# Secrets reutilizados do beeai-secrets (criado pelo secret-provider da API)
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeai-ai
+  namespace: beeai
+  labels:
+    app: beeai-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beeai-ai
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: beeai-ai
+    spec:
+      serviceAccountName: default
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: ai
+          image: acrbeeaidev.azurecr.io/beeai-ai:latest   # substituído pelo CI/CD
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: ai-service-config
+          env:
+            - name: DB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: beeai-secrets
+                  key: DB_CONNECTION_STRING
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: beeai-secrets
+                  key: JWT_SECRET_KEY
+            - name: AI_FOUNDRY_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: beeai-secrets
+                  key: AI_FOUNDRY_ENDPOINT
+            - name: CONTENT_SAFETY_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: beeai-secrets
+                  key: CONTENT_SAFETY_ENDPOINT
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
