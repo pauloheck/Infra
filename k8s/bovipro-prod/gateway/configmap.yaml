@@ -1,0 +1,71 @@
+###############################################################################
+# Gateway NGINX — ConfigMap BoviPro
+#
+# Roteamento:
+#   /api/*       → bovipro-api:8080  (strip /api prefix → Rust vê /<rota>)
+#   /            → bovipro-web:3000
+#   /gateway-health → probe direto do nginx (K8s liveness/readiness)
+#
+# NEXT_PUBLIC_API_BASE_URL no frontend deve ser:
+#   http://<GATEWAY_LB_IP>/api
+# Assim o browser chama http://<IP>/api/<rota> e o NGINX repassa como /<rota>.
+###############################################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bovipro-gateway-nginx-config
+  namespace: bovipro-prod
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_connect_timeout 10s;
+
+        upstream bovipro_api {
+            server bovipro-api:8080;
+        }
+
+        upstream bovipro_web {
+            server bovipro-web:3000;
+        }
+
+        server {
+            listen 80;
+
+            # ── Gateway health (K8s probes) ──────────────────────────────────
+            location = /gateway-health {
+                access_log off;
+                return 200 "ok\n";
+                add_header Content-Type text/plain;
+            }
+
+            # ── API → bovipro-api (strip /api prefix) ────────────────────────
+            # Frontend usa NEXT_PUBLIC_API_BASE_URL=http://<IP>/api
+            # Rewrite: /api/<rota> → /<rota> no Rust backend
+            location /api/ {
+                rewrite ^/api/(.*) /$1 break;
+                proxy_pass http://bovipro_api;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            }
+
+            # ── Frontend → bovipro-web ───────────────────────────────────────
+            location / {
+                proxy_pass http://bovipro_web;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+            }
+        }
+    }

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bovipro-api
+  namespace: bovipro-dev
+  labels:
+    app: bovipro-api
+spec:
+  type: ClusterIP
+  selector:
+    app: bovipro-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

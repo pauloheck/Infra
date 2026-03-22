@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: beeai-dev
+data:
+  APP_ENV: "development"
+  # DB_CONNECTION_STRING e JWT_SECRET_KEY vêm do Key Vault via SecretProviderClass

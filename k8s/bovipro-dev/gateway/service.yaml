@@ -1,0 +1,20 @@
+###############################################################################
+# Service — BoviPro Gateway (único LoadBalancer público)
+# API e Web são ClusterIP — acesso somente via este gateway.
+# AKS compartilha o Standard Load Balancer: IP público separado, sem custo extra.
+###############################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: bovipro-gateway
+  namespace: bovipro-dev
+  labels:
+    app: bovipro-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: bovipro-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

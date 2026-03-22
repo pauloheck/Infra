@@ -1,34 +1,28 @@
 #!/usr/bin/env bash
 ###############################################################################
 # rollback.sh — Rollback de deploy de uma aplicação
-# Uso: ./scripts/rollback.sh <app> [revision]
-#   app      : beeai-api | beeai-ai | beeai-web | bovipro-api | bovipro-web
-#   revision : número da revisão (opcional, padrão = revisão anterior)
+# Uso: ./scripts/rollback.sh <namespace> <deployment> [revision]
+#   namespace  : beeai-dev | beeai-prod | bovipro-dev | bovipro-prod | iai-dev | iai-prod
+#   deployment : beeai-api | beeai-ai | beeai-web | bovipro-api | bovipro-web | iai-core
+#   revision   : número da revisão (opcional, padrão = revisão anterior)
 #
 # Exemplos:
-#   ./scripts/rollback.sh beeai-api
-#   ./scripts/rollback.sh bovipro-api 3
+#   ./scripts/rollback.sh beeai-dev beeai-api
+#   ./scripts/rollback.sh bovipro-prod bovipro-api 3
+#   ./scripts/rollback.sh iai-dev iai-core
 ###############################################################################
 set -euo pipefail
 
-APP=${1:-}
-REVISION=${2:-}
+NS=${1:-}
+APP=${2:-}
+REVISION=${3:-}
 
-if [[ -z "$APP" ]]; then
-  echo "Uso: $0 <app> [revision]"
-  echo "Apps disponíveis: beeai-api, beeai-ai, beeai-web, bovipro-api, bovipro-web"
+if [[ -z "$NS" || -z "$APP" ]]; then
+  echo "Uso: $0 <namespace> <deployment> [revision]"
+  echo "Namespaces: beeai-dev, beeai-prod, bovipro-dev, bovipro-prod, iai-dev, iai-prod"
+  echo "Deployments: beeai-api, beeai-ai, beeai-web, bovipro-api, bovipro-web, iai-core"
   exit 1
 fi
-
-# Determinar namespace pela app
-case "$APP" in
-  beeai-*)   NS="beeai" ;;
-  bovipro-*) NS="bovipro" ;;
-  *)
-    echo "App desconhecida: $APP"
-    exit 1
-    ;;
-esac
 
 echo "── Histórico de revisões: $APP (namespace: $NS) ──"
 kubectl rollout history "deployment/$APP" --namespace "$NS"
@@ -47,4 +41,4 @@ echo "── Aguardando rollout ──"
 kubectl rollout status "deployment/$APP" --namespace "$NS" --timeout=5m
 
 echo ""
-echo "✅ Rollback de $APP concluído."
+echo "Rollback de $APP ($NS) concluído."

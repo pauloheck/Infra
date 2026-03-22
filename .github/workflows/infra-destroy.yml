@@ -32,6 +32,7 @@ jobs:
 
     env:
       TF_VAR_pg_admin_password: ${{ secrets.TF_VAR_pg_admin_password }}
+      TF_VAR_iai_device_token: ${{ secrets.TF_VAR_iai_device_token }}
 
     steps:
       - uses: actions/checkout@v4

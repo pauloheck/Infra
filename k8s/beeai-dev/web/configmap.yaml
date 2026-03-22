@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config
+  namespace: beeai-dev
+data:
+  # NEXT_PUBLIC_API_URL é embutido em build-time via ARG no Dockerfile.
+  # Em runtime, apenas a porta é exposta — não há variáveis de ambiente dinâmicas.
+  NODE_ENV: "production"

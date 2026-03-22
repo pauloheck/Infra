@@ -1,0 +1,19 @@
+###############################################################################
+# Service — IAI Core (LoadBalancer direto, sem gateway)
+###############################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: iai-core
+  namespace: iai-prod
+  labels:
+    app: iai-core
+spec:
+  type: LoadBalancer
+  selector:
+    app: iai-core
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP

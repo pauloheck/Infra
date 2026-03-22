@@ -1,4 +1,4 @@
-# Infra mínima compartilhada — BeeAI + BoviPro
+# Infra mínima compartilhada — BeeAI + BoviPro + IAI
 # Aplicar: cd infra/envs/shared-dev && TF_VAR_pg_admin_password="..." terraform apply -var-file="shared-dev.tfvars" -auto-approve
 
 project  = "shared"
@@ -9,7 +9,7 @@ tags = {
   project   = "shared"
   env       = "dev"
   managedBy = "terraform"
-  apps      = "beeai,bovipro"
+  apps      = "beeai,bovipro,iai"
 }
 
 # --- Network -----------------------------------------------------------------
@@ -34,3 +34,6 @@ log_retention_days = 30
 # --- Azure OpenAI (BeeAI) ----------------------------------------------------
 ai_gpt4o_capacity      = 10
 ai_gpt4o_mini_capacity = 10
+
+# --- IAI device token (passado via TF_VAR_iai_device_token ou GitHub Secret) ---
+# iai_device_token = "..." # NÃO commitar — usar TF_VAR_iai_device_token no CI/CD

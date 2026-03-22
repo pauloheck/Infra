@@ -1,0 +1,102 @@
+###############################################################################
+# NetworkPolicy — BeeAI namespace
+# Princípio: menor privilégio. Cada pod aceita tráfego somente de quem precisa.
+###############################################################################
+
+# API: aceita somente do gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-api
+  namespace: beeai-dev
+spec:
+  podSelector:
+    matchLabels:
+      app: beeai-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: beeai-gateway
+      ports:
+        - protocol: TCP
+          port: 8000
+
+# AI Service: aceita somente do gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-ai
+  namespace: beeai-dev
+spec:
+  podSelector:
+    matchLabels:
+      app: beeai-ai
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: beeai-gateway
+      ports:
+        - protocol: TCP
+          port: 8001
+
+# Web: aceita somente do gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-web
+  namespace: beeai-dev
+spec:
+  podSelector:
+    matchLabels:
+      app: beeai-web
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: beeai-gateway
+      ports:
+        - protocol: TCP
+          port: 3000
+
+# Gateway: aceita tráfego externo (LoadBalancer) na porta 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-to-gateway
+  namespace: beeai-dev
+spec:
+  podSelector:
+    matchLabels:
+      app: beeai-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 80
+
+# Egress: todos os pods podem fazer chamadas externas (Azure OpenAI, Key Vault, etc.)
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-all
+  namespace: beeai-dev
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - {}

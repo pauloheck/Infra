@@ -1,0 +1,80 @@
+###############################################################################
+# NetworkPolicy — namespace bovipro
+# Princípio de menor privilégio: cada pod aceita tráfego somente de quem precisa.
+###############################################################################
+
+# API: aceita somente do gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-api
+  namespace: bovipro-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: bovipro-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: bovipro-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+
+# Web: aceita somente do gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-web
+  namespace: bovipro-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: bovipro-web
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: bovipro-gateway
+      ports:
+        - protocol: TCP
+          port: 3000
+
+# Gateway: aceita tráfego externo (LoadBalancer) na porta 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-to-gateway
+  namespace: bovipro-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: bovipro-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 80
+
+# Egress: todos os pods podem fazer chamadas externas (PostgreSQL, Key Vault, etc.)
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-all
+  namespace: bovipro-prod
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - {}

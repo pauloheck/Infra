@@ -104,3 +104,10 @@ variable "ai_gpt4o_mini_capacity" {
   default     = 10
   description = "GPT-4o-mini capacity em K TPM."
 }
+
+# --- IAI -----------------------------------------------------------------------
+variable "iai_device_token" {
+  type        = string
+  sensitive   = true
+  description = "Token de autenticação do device IAI (MVP)."
+}

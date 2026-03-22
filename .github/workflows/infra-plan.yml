@@ -57,6 +57,7 @@ jobs:
           terraform plan \
             -var-file="shared-dev.tfvars" \
             -var="pg_admin_password=${{ secrets.TF_VAR_pg_admin_password }}" \
+            -var="iai_device_token=${{ secrets.TF_VAR_iai_device_token }}" \
             -no-color -out=tfplan
         continue-on-error: true
 

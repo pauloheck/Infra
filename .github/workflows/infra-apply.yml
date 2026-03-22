@@ -1,0 +1,96 @@
+###############################################################################
+# infra-apply.yml
+# Aplica a infra compartilhada _heck no Azure (BeeAI + BoviPro + IAI).
+# Gerencia recursos de DEV e PROD no mesmo state.
+#
+# Gatilhos:
+#   - Push em main quando envs/shared-dev/** ou modules/** mudam
+#   - workflow_dispatch (manual)
+#
+# Secrets necessários (environment "dev"):
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#   TF_VAR_pg_admin_password
+#   TF_VAR_iai_device_token
+###############################################################################
+name: "Infra: Apply"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "envs/shared-dev/**"
+      - "modules/**"
+      - ".github/workflows/infra-apply.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  apply:
+    name: "Terraform Apply"
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      TF_VAR_pg_admin_password: ${{ secrets.TF_VAR_pg_admin_password }}
+      TF_VAR_iai_device_token: ${{ secrets.TF_VAR_iai_device_token }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set ARM env vars
+        run: |
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}"             >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}"             >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+          echo "ARM_USE_OIDC=true"                                         >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: envs/shared-dev
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: envs/shared-dev
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: envs/shared-dev
+        run: terraform plan -var-file="shared-dev.tfvars" -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: envs/shared-dev
+        run: terraform apply -auto-approve tfplan
+
+      - name: Outputs pós-apply
+        working-directory: envs/shared-dev
+        run: |
+          echo "════════════════════════════════════════════════"
+          echo "  Infra _heck aplicada com sucesso!"
+          echo "════════════════════════════════════════════════"
+          terraform output -json | jq '{
+            aks_name,
+            acr_name,
+            acr_login_server,
+            postgres_fqdn,
+            kv_beeai_name,
+            kv_bovipro_name,
+            kv_iai_name
+          }'
+          echo ""
+          echo "Proximos passos:"
+          echo "  1. Criar secrets manuais nos KVs (jwt-secret-key)"
+          echo "  2. Deploy de cada app (deploy-dev.yml / deploy-prod.yml)"

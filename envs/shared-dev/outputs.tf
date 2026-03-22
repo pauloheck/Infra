@@ -34,8 +34,16 @@ output "kv_bovipro_name" {
   value = module.kv_bovipro.key_vault_name
 }
 
-output "openai_endpoint" {
+output "openai_beeai_endpoint" {
   value = module.ai.openai_endpoint
+}
+
+output "kv_iai_name" {
+  value = module.kv_iai.key_vault_name
+}
+
+output "openai_iai_endpoint" {
+  value = azurerm_cognitive_account.openai_iai.endpoint
 }
 
 output "log_analytics_workspace_id" {
@@ -50,13 +58,13 @@ output "app_insights_connection_string" {
 # ─── Instruções pós-apply ────────────────────────────────────────────────────
 #
 # 1. Criar secrets manuais nos Key Vaults:
-#    az keyvault secret set --vault-name kv-beeai-dev \
-#      --name jwt-secret-key --value "<jwt-secret>"
+#    az keyvault secret set --vault-name kv-beeai-shareddev \
+#      --name jwt-secret-key --value "$(openssl rand -base64 48)"
 #
 #    az keyvault secret set --vault-name kv-bovipro-dev \
-#      --name bovipro-jwt-secret --value "<jwt-secret>"
+#      --name bovipro-jwt-secret --value "$(openssl rand -base64 48)"
 #
-# 2. Atualizar GitHub Secrets nos dois repos:
+# 2. Atualizar GitHub Secrets nos três repos:
 #
 #    BeeAI (repo beeai):
 #      ACR_NAME           = acrshareddev
@@ -65,6 +73,11 @@ output "app_insights_connection_string" {
 #
 #    BoviPro (repo bovipro-infra):
 #      ACR_NAME           = acrshareddev
+#      AKS_NAME           = aks-shared-dev
+#      AKS_RESOURCE_GROUP = rg-shared-dev
+#
+#    IAI (repo IAI):
+#      ACR_NAME           = acrheckiodev
 #      AKS_NAME           = aks-shared-dev
 #      AKS_RESOURCE_GROUP = rg-shared-dev
 #      AZURE_CLIENT_ID    = <client-id-do-oidc>
