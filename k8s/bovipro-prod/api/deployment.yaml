@@ -44,6 +44,10 @@ spec:
                 secretKeyRef:
                   name: bovipro-secrets
                   key: JWT_SECRET
+          volumeMounts:
+            - name: secrets-store
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -65,3 +69,10 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 20
             failureThreshold: 3
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: bovipro-kv-secrets
