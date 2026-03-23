@@ -99,6 +99,32 @@ module "aks" {
   depends_on = [module.network]
 }
 
+# ---------- RBAC: AKS → Network Contributor (VNet) — necessário para Internal LBs
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  scope                            = module.network.vnet_id
+  role_definition_name             = "Network Contributor"
+  principal_id                     = module.aks.aks_identity_principal_id
+  skip_service_principal_aad_check = true
+  depends_on                       = [module.aks, module.network]
+}
+
+# ---------- Application Gateway + WAF (BoviPro) --------------------------------
+module "appgw_bovipro" {
+  source = "../../modules/appgw"
+
+  project             = "bovipro"
+  env                 = var.env
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+  subnet_appgw_id     = module.network.subnet_appgw_id
+
+  bovipro_dev_internal_ip  = var.bovipro_dev_internal_ip
+  bovipro_prod_internal_ip = var.bovipro_prod_internal_ip
+
+  depends_on = [module.network]
+}
+
 # ---------- PostgreSQL (compartilhado — servidor único, databases separados) --
 module "postgres" {
   source = "../../modules/postgres"

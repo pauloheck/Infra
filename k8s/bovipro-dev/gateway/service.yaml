@@ -10,8 +10,11 @@ metadata:
   namespace: bovipro-dev
   labels:
     app: bovipro-gateway
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
+  loadBalancerIP: "10.10.15.200"
   selector:
     app: bovipro-gateway
   ports:

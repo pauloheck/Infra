@@ -55,6 +55,15 @@ output "app_insights_connection_string" {
   sensitive = true
 }
 
+output "appgw_bovipro_public_ip" {
+  value       = module.appgw_bovipro.public_ip_address
+  description = "IP público estático do Application Gateway BoviPro — usar nos registros DNS A"
+}
+
+output "appgw_bovipro_name" {
+  value = module.appgw_bovipro.appgw_name
+}
+
 # ─── Instruções pós-apply ────────────────────────────────────────────────────
 #
 # 1. Criar secrets manuais nos Key Vaults:
