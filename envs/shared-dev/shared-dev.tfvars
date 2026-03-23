@@ -35,9 +35,5 @@ log_retention_days = 30
 ai_gpt4o_capacity      = 10
 ai_gpt4o_mini_capacity = 10
 
-# --- Application Gateway (BoviPro) --- IPs internos dos Internal LBs ----------
-bovipro_dev_internal_ip  = "10.10.15.200"
-bovipro_prod_internal_ip = "10.10.15.201"
-
 # --- IAI device token (passado via TF_VAR_iai_device_token ou GitHub Secret) ---
 # iai_device_token = "..." # NÃO commitar — usar TF_VAR_iai_device_token no CI/CD

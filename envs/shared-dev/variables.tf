@@ -105,19 +105,6 @@ variable "ai_gpt4o_mini_capacity" {
   description = "GPT-4o-mini capacity em K TPM."
 }
 
-# --- Application Gateway (BoviPro) --------------------------------------------
-variable "bovipro_dev_internal_ip" {
-  type        = string
-  default     = "10.10.15.200"
-  description = "IP interno (snet-aks) do Internal LB bovipro-dev gateway"
-}
-
-variable "bovipro_prod_internal_ip" {
-  type        = string
-  default     = "10.10.15.201"
-  description = "IP interno (snet-aks) do Internal LB bovipro-prod gateway"
-}
-
 # --- IAI -----------------------------------------------------------------------
 variable "iai_device_token" {
   type        = string

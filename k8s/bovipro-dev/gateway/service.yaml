@@ -1,7 +1,7 @@
 ###############################################################################
-# Service — BoviPro Gateway (único LoadBalancer público)
-# API e Web são ClusterIP — acesso somente via este gateway.
-# AKS compartilha o Standard Load Balancer: IP público separado, sem custo extra.
+# Service — BoviPro Gateway (LoadBalancer com IP estático)
+# IP público fixo criado via Terraform (pip-bovipro-dev em rg-shared-dev).
+# DNS: dev.bovipro.com.br → 137.116.71.62
 ###############################################################################
 apiVersion: v1
 kind: Service
@@ -11,10 +11,10 @@ metadata:
   labels:
     app: bovipro-gateway
   annotations:
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: "rg-shared-dev"
 spec:
   type: LoadBalancer
-  loadBalancerIP: "10.10.15.200"
+  loadBalancerIP: "137.116.71.62"
   selector:
     app: bovipro-gateway
   ports:

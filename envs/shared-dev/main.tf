@@ -99,30 +99,23 @@ module "aks" {
   depends_on = [module.network]
 }
 
-# ---------- RBAC: AKS → Network Contributor (VNet) — necessário para Internal LBs
-resource "azurerm_role_assignment" "aks_network_contributor" {
-  scope                            = module.network.vnet_id
-  role_definition_name             = "Network Contributor"
-  principal_id                     = module.aks.aks_identity_principal_id
-  skip_service_principal_aad_check = true
-  depends_on                       = [module.aks, module.network]
+# ---------- Static Public IPs (BoviPro) — IPs fixos para DNS bovipro.com.br ----
+resource "azurerm_public_ip" "bovipro_dev" {
+  name                = "pip-bovipro-dev"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  tags                = var.tags
 }
 
-# ---------- Application Gateway + WAF (BoviPro) --------------------------------
-module "appgw_bovipro" {
-  source = "../../modules/appgw"
-
-  project             = "bovipro"
-  env                 = var.env
-  location            = var.location
+resource "azurerm_public_ip" "bovipro_prod" {
+  name                = "pip-bovipro-prod"
   resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  allocation_method   = "Static"
+  sku                 = "Standard"
   tags                = var.tags
-  subnet_appgw_id     = module.network.subnet_appgw_id
-
-  bovipro_dev_internal_ip  = var.bovipro_dev_internal_ip
-  bovipro_prod_internal_ip = var.bovipro_prod_internal_ip
-
-  depends_on = [module.network]
 }
 
 # ---------- PostgreSQL (compartilhado — servidor único, databases separados) --

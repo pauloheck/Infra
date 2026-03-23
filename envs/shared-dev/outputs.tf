@@ -55,13 +55,14 @@ output "app_insights_connection_string" {
   sensitive = true
 }
 
-output "appgw_bovipro_public_ip" {
-  value       = module.appgw_bovipro.public_ip_address
-  description = "IP público estático do Application Gateway BoviPro — usar nos registros DNS A"
+output "bovipro_dev_public_ip" {
+  value       = azurerm_public_ip.bovipro_dev.ip_address
+  description = "IP público estático BoviPro DEV — DNS: dev.bovipro.com.br"
 }
 
-output "appgw_bovipro_name" {
-  value = module.appgw_bovipro.appgw_name
+output "bovipro_prod_public_ip" {
+  value       = azurerm_public_ip.bovipro_prod.ip_address
+  description = "IP público estático BoviPro PROD — DNS: bovipro.com.br"
 }
 
 # ─── Instruções pós-apply ────────────────────────────────────────────────────
