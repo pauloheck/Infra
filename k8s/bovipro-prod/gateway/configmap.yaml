@@ -28,13 +28,8 @@ data:
         proxy_send_timeout 300s;
         proxy_connect_timeout 10s;
 
-        upstream bovipro_api {
-            server bovipro-api:8080;
-        }
-
-        upstream bovipro_web {
-            server bovipro-web:3000;
-        }
+        # DNS resolver do Kubernetes (CoreDNS)
+        resolver kube-dns.kube-system.svc.cluster.local valid=10s;
 
         server {
             listen 80;
@@ -47,11 +42,10 @@ data:
             }
 
             # ── API → bovipro-api (strip /api prefix) ────────────────────────
-            # Frontend usa NEXT_PUBLIC_API_BASE_URL=http://<IP>/api
-            # Rewrite: /api/<rota> → /<rota> no Rust backend
             location /api/ {
+                set $api_upstream bovipro-api.bovipro-prod.svc.cluster.local:8080;
                 rewrite ^/api/(.*) /$1 break;
-                proxy_pass http://bovipro_api;
+                proxy_pass http://$api_upstream;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -59,7 +53,8 @@ data:
 
             # ── Frontend → bovipro-web ───────────────────────────────────────
             location / {
-                proxy_pass http://bovipro_web;
+                set $web_upstream bovipro-web.bovipro-prod.svc.cluster.local:3000;
+                proxy_pass http://$web_upstream;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
