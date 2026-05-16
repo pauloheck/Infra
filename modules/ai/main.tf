@@ -48,8 +48,8 @@ resource "azurerm_cognitive_deployment" "gpt4o_mini" {
 
   model {
     format  = "OpenAI"
-    name    = "gpt-4o-mini"
-    version = var.gpt4o_mini_version
+    name    = "gpt-4o"
+    version = "2024-11-20"
   }
 
   scale {

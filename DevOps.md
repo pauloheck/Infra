@@ -40,7 +40,7 @@
 │                    Azure East US 2 — rg-shared-dev                   │
 │                                                                        │
 │  ┌──────────────────────────────────────────────────────────────┐    │
-│  │        AKS — aks-shared-dev (1 nó Standard_D2s_v3)           │    │
+│  │        AKS — aks-shared-dev (1 nó D2als_v7, STOP/START)      │    │
 │  │                                                                │    │
 │  │  ┌─────────────────────────┐  ┌─────────────────────────┐    │    │
 │  │  │   namespace: beeai       │  │   namespace: bovipro     │    │    │
@@ -81,7 +81,7 @@
 | Recurso | Nome | Propósito |
 |---|---|---|
 | Resource Group | `rg-shared-dev` | Contém todos os recursos compartilhados |
-| AKS | `aks-shared-dev` | Cluster único, 1 nó D2s_v3 |
+| AKS | `aks-shared-dev` | Cluster único, 1 nó D2als_v7 (Free tier) |
 | ACR | `acrheckiodev` | Registry de imagens Docker |
 | PostgreSQL | `psql-heckio-dev` | Servidor único, múltiplos databases |
 | Key Vault BeeAI | `kv-beeai-shareddev` | Secrets exclusivos BeeAI |
@@ -93,42 +93,59 @@
 
 ### Custo Estimado (fase de construção)
 
-| Recurso | SKU | Custo/mês |
-|---|---|---|
-| AKS — 1 nó | Standard_D2s_v3 (2vCPU/8GB) | ~$70 |
-| PostgreSQL | B_Standard_B1ms | ~$15 |
-| ACR Basic | Basic | ~$5 |
-| Key Vault ×2 | Standard | ~$2 |
-| Log Analytics | PerGB2018 (30 dias) | ~$5 |
-| Azure OpenAI | Pay-per-token | variável |
-| **Total fixo** | | **~$97/mês** |
+| Recurso | SKU | 24/7 | Parado |
+|---|---|---|---|
+| AKS — 1 nó | Standard_D2als_v7 (2vCPU/4GB) | ~$59/mês | $0 |
+| PostgreSQL | B_Standard_B1ms | ~$10/mês | ~$2 (storage) |
+| 3× Static Public IPs | Standard | ~$7/mês | ~$7/mês |
+| ACR Basic | Basic | ~$4/mês | ~$4/mês |
+| Log Analytics | PerGB2018, 30d, cap 0.1GB/d | ~$0 | ~$0 |
+| Key Vault ×6 | Standard | ~$1/mês | ~$1/mês |
+| Azure OpenAI / Content Safety | Pay-per-use | ~$0 | ~$0 |
+| **Total** | | **~$82/mês** | **~$14/mês** |
 
-> **Nota:** Standard_B2ms (~$42/mês) não possui quota de AKS nesta subscription em East US 2. Usando D2s_v3 que é confirmadamente disponível. Para reduzir custo futuro, solicitar quota B2ms via suporte Azure.
+> **IMPORTANTE — Operação Mínima de Custos:**
+> - Estamos em fase de **construção/desenvolvimento**. Todo recurso deve operar no mínimo absoluto.
+> - **Parar o cluster quando não estiver usando**: `./scripts/cluster-stop.sh`
+> - **Iniciar quando for trabalhar**: `./scripts/cluster-start.sh`
+> - PostgreSQL reinicia automaticamente após 7 dias parado — re-executar stop se necessário.
+> - B-series (B2ls_v2, ~$30/mês) não tem quota nesta subscription. Solicitar via Portal → Subscription → Usage + quotas → "Standard BSv2 Family" → 4 vCPUs em eastus2.
 
 ---
 
 ## 2. Estado Atual da Infraestrutura
 
-### rg-shared-dev (CRIADO — 2026-03-18)
+### rg-shared-dev (CRIADO 2026-03-18 — OTIMIZADO 2026-03-23)
 
 ```
 ✅ rg-shared-dev               (East US 2)
 ✅ vnet-shared-dev              (10.10.0.0/16)
-✅ aks-shared-dev               (1x D2s_v3, FQDN: aks-shared-dev-wvgwfkpq.hcp.eastus2.azmk8s.io)
-✅ acrheckiodev                 (acrheckiodev.azurecr.io)
-✅ psql-heckio-dev              (psql-heckio-dev.postgres.database.azure.com, DBs: beeai + bovipro)
-✅ kv-beeai-shareddev           (secrets: pg-connection-string, jwt-secret-key, ai-foundry-*, appinsights-*)
-✅ kv-bovipro-dev               (secrets: bovipro-pg-connection, bovipro-jwt-secret)
-✅ oai-beeai-shareddev          (endpoint: https://oai-beeai-shareddev.openai.azure.com/)
-✅ cs-beeai-shareddev
-✅ law-shared-dev + appi-shared-dev
+✅ aks-shared-dev               (1x D2als_v7, K8s 1.32, Free tier)
+✅ acrheckiodev                 (acrheckiodev.azurecr.io, Basic)
+✅ psql-heckio-dev              (B1ms, 32GB, DBs: beeai, bovipro, iai, *-prod)
+✅ kv-beeai-shareddev, kv-beeai-prod
+✅ kv-bovipro-dev, kv-bovipro-prod
+✅ kv-iai-shareddev, kv-iai-prod
+✅ oai-beeai-shareddev          (GPT-4o cap=1 + GPT-4o-mini cap=1)
+✅ oai-iai-dev                   (GPT-4o-mini cap=1)
+✅ cs-beeai-shareddev            (Content Safety S0)
+✅ law-shared-dev                (PerGB2018, 30d, daily cap 0.1GB)
+✅ appi-shared-dev               (30d retention)
+✅ pip-bovipro-dev               (137.116.71.62 → dev.bovipro.com.br)
+✅ pip-bovipro-prod              (52.251.92.30 → bovipro.com.br)
+
+⚡ STATUS: PARADO (az aks stop + pg stop) — custo ~$14/mês
+   Para iniciar: ./scripts/cluster-start.sh
 ```
 
-### Infras Legadas (ainda rodando — DESTRUIR após validação)
+### Infras Legadas
 
 ```
-⚠️  rg-beeai-dev    (AKS antigo BeeAI — ~$200/mês)
-⚠️  rg-bovipro-dev  (App Service BoviPro — ~$15/mês)
+✅ rg-beeai-dev      — DELETADO (2026-03-18)
+✅ rg-bovipro-dev    — DELETADO (2026-03-18)
+✅ rg-bovipro-tfstate — DELETADO (2026-03-18)
+✅ kv-beeai-dev       — PURGADO (2026-03-23)
+✅ kvboviprodev001    — PURGADO (2026-03-23)
 ```
 
 ### GitHub Secrets (já atualizados em ambos os repos)
@@ -290,7 +307,7 @@ Key             : shared-dev/terraform.tfstate
 | `project` | `shared` | Prefixo padrão |
 | `env` | `dev` | Ambiente |
 | `location` | `eastus2` | Região Azure |
-| `system_vm_size` | `Standard_D2s_v3` | VM do nó AKS (B2ms sem quota nesta sub) |
+| `system_vm_size` | `Standard_D2als_v7` | VM do nó AKS (B-series sem quota nesta sub) |
 | `system_node_count` | `1` | 1 nó único |
 | `enable_user_pool` | `false` | Workloads rodam no pool system |
 | `pg_sku` | `B_Standard_B1ms` | PostgreSQL burstable mínimo |
@@ -893,7 +910,41 @@ kubectl run psql-debug \
 \q          # sair
 ```
 
-### RB-08: Verificar Custo e Recursos Ativos
+### RB-08: Parar Cluster (Economia — NÃO ESQUECER!)
+
+> **Executar SEMPRE que terminar de trabalhar.** AKS + PostgreSQL parados = ~$14/mês vs ~$82/mês rodando.
+
+```bash
+# Parar tudo (economia ~R$16/dia)
+./Infra/scripts/cluster-stop.sh
+
+# Ou manualmente:
+az aks stop --resource-group rg-shared-dev --name aks-shared-dev --no-wait
+az postgres flexible-server stop --resource-group rg-shared-dev --name psql-heckio-dev
+```
+
+**Verificar status:**
+```bash
+az aks show -g rg-shared-dev -n aks-shared-dev --query "powerState.code" -o tsv
+az postgres flexible-server show -g rg-shared-dev -n psql-heckio-dev --query "state" -o tsv
+```
+
+> ⚠️ PostgreSQL reinicia automaticamente após **7 dias** parado. Se não for usar por mais tempo, agende re-stop.
+
+### RB-08b: Iniciar Cluster (Antes de Trabalhar)
+
+```bash
+# Iniciar tudo (~3-5 minutos)
+./Infra/scripts/cluster-start.sh
+
+# Ou manualmente:
+az postgres flexible-server start --resource-group rg-shared-dev --name psql-heckio-dev
+az aks start --resource-group rg-shared-dev --name aks-shared-dev
+az aks get-credentials -g rg-shared-dev -n aks-shared-dev --admin --overwrite-existing
+kubectl get pods --all-namespaces
+```
+
+### RB-08c: Verificar Custo e Recursos Ativos
 
 ```bash
 # Recursos do shared-dev
@@ -1051,58 +1102,79 @@ gh secret set AKS_RESOURCE_GROUP --body "rg-shared-dev" --repo pauloheck/NOVAAPP
 
 ## 12. Gestão de Custos
 
-### Orçamento Atual (shared-dev)
+> **PRINCÍPIO FUNDAMENTAL: Operar no mínimo absoluto de custo.**
+> Estamos em fase de construção. Cada centavo economizado importa.
 
-| Recurso | SKU | ~Custo/mês |
-|---|---|---|
-| AKS — 1 nó D2s_v3 | Standard_D2s_v3 | $70 |
-| PostgreSQL | B_Standard_B1ms | $15 |
-| ACR Basic | Basic | $5 |
-| Key Vault ×2 | Standard | $2 |
-| Log Analytics | PerGB2018, 30 dias | $5 |
-| Azure OpenAI | Pay-per-token | variável |
-| **Total fixo** | | **~$97/mês** |
+### Orçamento Atual (shared-dev — otimizado 2026-03-23)
 
-**Comparação:** Antes da consolidação, as duas infras separadas custavam ~$268/mês (AKS com 3x D2s_v3 + App Service). Economia atual: ~$171/mês.
+| Recurso | SKU | 24/7 | Parado | Nota |
+|---|---|---|---|---|
+| AKS — 1 nó | D2als_v7 (2vCPU/4GB AMD) | ~$59 | $0 | `az aks stop/start` |
+| PostgreSQL | B_Standard_B1ms (32GB) | ~$10 | ~$2 | Storage cobra mesmo parado |
+| 3× Public IPs | Standard Static | ~$7 | ~$7 | 2 BoviPro + 1 AKS egress |
+| ACR Basic | Basic (1.2GB usado) | ~$4 | ~$4 | |
+| Key Vault ×6 | Standard | ~$1 | ~$1 | Pay-per-operation |
+| Log Analytics | PerGB2018, 30d, cap 0.1GB/d | ~$0 | ~$0 | Sem ingestão ativa |
+| App Insights | workspace-based, 30d | ~$0 | ~$0 | |
+| OpenAI (2 contas) | capacity 1 cada | ~$0 | ~$0 | Pay-per-token |
+| Content Safety | S0 | ~$0 | ~$0 | Pay-per-call |
+| **TOTAL** | | **~$82/mês** | **~$14/mês** | |
 
-**Oportunidade futura:** Solicitar quota para Standard_B2ms (~$42/mês) via suporte Azure. Economia adicional de ~$28/mês.
+**Comparação histórica:**
+- Infras separadas (antes consolidação): ~$268/mês
+- Após consolidação (2026-03-18): ~$97/mês
+- Após otimização agressiva (2026-03-23): **~$82/mês (24/7) ou ~$14/mês (parado)**
 
-### Regras para Manter Custo Baixo
+### Regra #1: PARAR O CLUSTER QUANDO NÃO USAR
 
-1. **Nunca habilitar Container Insights** em dev (`enable_container_insights = false`)
-2. **Logs 30 dias** em dev (mínimo do SKU PerGB2018 — não aumentar)
-3. **Sem user pool no AKS** (`enable_user_pool = false`)
-4. **Sem HA no PostgreSQL** (`high_availability = false`)
-5. **Sem geo-redundant backup** (`geo_redundant_backup = false`)
-6. **ACR Basic** (sem geo-replication)
-7. **Destruir infras antigas** após validar que apps funcionam no shared-dev
-8. **Monitorar AzureDiagnostics**: usar apenas `kube-audit-admin` (não `kube-audit`)
+```bash
+# OBRIGATÓRIO ao terminar de trabalhar:
+./Infra/scripts/cluster-stop.sh    # Para AKS + PostgreSQL
 
-### Quando Escalar (produção)
+# Antes de começar a trabalhar:
+./Infra/scripts/cluster-start.sh   # Inicia tudo (~3-5 min)
+```
+
+> ⚠️ PostgreSQL reinicia automaticamente após 7 dias. Re-executar stop se necessário.
+
+### Regras para Manter Custo Mínimo
+
+1. **PARAR cluster quando não estiver trabalhando** (ver RB-08)
+2. **Nunca habilitar Container Insights** (`enable_container_insights = false`)
+3. **Nunca habilitar AKS diagnostics** (`enable_diagnostics = false`)
+4. **Log Analytics daily cap 0.1 GB** (previne custos de ingestão)
+5. **App Insights retenção 30 dias** (não aumentar)
+6. **Sem user pool no AKS** (`enable_user_pool = false`)
+7. **Sem HA no PostgreSQL** (`high_availability = false`)
+8. **Sem geo-redundant backup** (`geo_redundant_backup = false`)
+9. **ACR Basic** (sem geo-replication)
+10. **OpenAI capacity = 1** para todos os deployments
+11. **Não criar novos Public IPs** sem necessidade real
+12. **Antes de qualquer recurso novo** — verificar custo mensal estimado
+
+### Oportunidade: Quota B-series
+
+`Standard_B2ls_v2` custa ~$30/mês (vs D2als_v7 ~$59). Economia de ~$29/mês.
+Quota atual: **0 vCPUs** para `Standard BSv2 Family` em eastus2.
+
+Para solicitar:
+1. Portal Azure → Subscription → Usage + quotas
+2. Filtrar: `Standard BSv2 Family`, região `eastus2`
+3. Request increase → **4 vCPUs**
+4. Após aprovação: alterar `system_vm_size = "Standard_B2ls_v2"` em `shared-dev.tfvars`
+
+### Quando Escalar (produção real)
 
 Ao criar `infra/envs/prd/` (não usar shared-dev para produção):
 
-| Recurso | Dev | Prd |
+| Recurso | Dev (atual) | Prd (futuro) |
 |---|---|---|
-| AKS system | 1× D2s_v3 | 2× D4s_v5 |
+| AKS system | 1× D2als_v7 | 2× D4s_v5 |
 | AKS user pool | desabilitado | 2-5× D8s_v5 (autoscale) |
 | PostgreSQL | B_B1ms | GP_D2s_v3 + HA |
 | ACR | Basic | Premium |
 | Log retention | 30 dias | 90 dias |
 | Geo-redundant backup | off | on |
-
-### Alerta de Budget
-
-```bash
-# Criar budget de $120/mês para rg-shared-dev (com 20% de folga)
-az consumption budget create \
-  --budget-name "shared-dev-budget" \
-  --amount 120 \
-  --time-grain Monthly \
-  --resource-group rg-shared-dev \
-  --start-date "2026-04-01" \
-  --end-date "2027-04-01"
-```
 
 ---
 

@@ -90,13 +90,14 @@ resource "azurerm_kubernetes_cluster" "main" {
   tags                = var.tags
 
   default_node_pool {
-    name                = "system"
-    node_count          = var.system_node_count
-    vm_size             = var.system_vm_size
-    vnet_subnet_id      = var.subnet_id
-    os_disk_size_gb     = 50
-    type                = "VirtualMachineScaleSets"
-    enable_auto_scaling = false
+    name                        = "system"
+    node_count                  = var.system_node_count
+    vm_size                     = var.system_vm_size
+    vnet_subnet_id              = var.subnet_id
+    os_disk_size_gb             = 50
+    type                        = "VirtualMachineScaleSets"
+    enable_auto_scaling         = false
+    temporary_name_for_rotation = "tmp"
 
     tags = var.tags
   }

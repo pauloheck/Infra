@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traduxai-web
+  namespace: traduxai-dev
+  labels:
+    app: traduxai-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traduxai-web
+  template:
+    metadata:
+      labels:
+        app: traduxai-web
+    spec:
+      volumes:
+        - name: kv-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: traduxai-kv-secrets
+      containers:
+        - name: web
+          image: ACR_PLACEHOLDER/traduxai-web:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NEXTAUTH_URL
+              value: https://traduxai.heck.app
+            - name: NEXT_PUBLIC_API_URL
+              value: https://traduxai.heck.app/api/v1
+            - name: KEYCLOAK_URL
+              value: http://keycloak.keycloak.svc.cluster.local:8080
+            - name: KEYCLOAK_CLIENT_ID
+              value: traduxai-web
+            - name: AUTH_TRUST_HOST
+              value: "true"
+          envFrom:
+            - secretRef:
+                name: traduxai-secrets
+          volumeMounts:
+            - name: kv-secrets
+              mountPath: /mnt/secrets
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

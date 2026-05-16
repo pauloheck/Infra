@@ -7,6 +7,21 @@ variable "project" {
   default = "shared"
 }
 
+# --- Tradux AI ----------------------------------------------------------------
+variable "traduxai_nextauth_secret" {
+  type        = string
+  sensitive   = true
+  default     = "dev-change-me-before-prod"
+  description = "Secret do NextAuth para Tradux AI dev. Sobrescrever em terraform.tfvars/CI."
+}
+
+variable "traduxai_keycloak_client_secret" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Client secret Keycloak do client traduxai-web quando confidencial."
+}
+
 variable "env" {
   type    = string
   default = "dev"
@@ -110,4 +125,23 @@ variable "iai_device_token" {
   type        = string
   sensitive   = true
   description = "Token de autenticação do device IAI (MVP)."
+}
+
+# --- GetChat -------------------------------------------------------------------
+variable "getchat_anthropic_api_key" {
+  type        = string
+  sensitive   = true
+  description = "Anthropic API key para o Claude (GetChat AI + ingestion services)."
+}
+
+variable "getchat_search_sku" {
+  type        = string
+  default     = "basic"
+  description = "SKU do Azure AI Search. 'free' ($0, sem vector search) ou 'basic' (~$75/mês, com vector search)."
+}
+
+variable "getchat_search_location" {
+  type        = string
+  default     = null
+  description = "Região do AI Search (override). Null = usa var.location. Use quando a região principal não tem capacidade free."
 }

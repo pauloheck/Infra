@@ -9,7 +9,7 @@ tags = {
   project   = "shared"
   env       = "dev"
   managedBy = "terraform"
-  apps      = "beeai,bovipro,iai"
+  apps      = "beeai,bovipro,iai,getchat,traduxai"
 }
 
 # --- Network -----------------------------------------------------------------
@@ -20,20 +20,30 @@ subnet_pe_prefix    = ["10.10.17.0/24"]
 subnet_appgw_prefix = ["10.10.18.0/24"]
 
 # --- AKS (1 nó, sem user pool) -----------------------------------------------
-kubernetes_version = "1.32"
+kubernetes_version = "1.33"
 system_node_count  = 1
-system_vm_size     = "Standard_D2s_v3"  # 2 vCPU / 8 GB RAM — B2ms sem quota AKS nesta subscription
+system_vm_size     = "Standard_D2als_v7" # 2 vCPU / 4 GB RAM — AMD v7, ~$59/mês (vs D2s_v3 $70/mês)
 
 # --- PostgreSQL (B1ms compartilhado) -----------------------------------------
 pg_sku        = "B_Standard_B1ms"
 pg_storage_mb = 32768
 
 # --- Observability -----------------------------------------------------------
-log_retention_days = 30
+log_retention_days = 30 # mínimo do SKU PerGB2018
 
 # --- Azure OpenAI (BeeAI) ----------------------------------------------------
-ai_gpt4o_capacity      = 10
-ai_gpt4o_mini_capacity = 10
+ai_gpt4o_capacity      = 1
+ai_gpt4o_mini_capacity = 1
 
-# --- IAI device token (passado via TF_VAR_iai_device_token ou GitHub Secret) ---
-# iai_device_token = "..." # NÃO commitar — usar TF_VAR_iai_device_token no CI/CD
+# --- GetChat -----------------------------------------------------------------
+getchat_search_sku      = "free"   # free=$0 (demo), basic=~$75/mês (produção com vector search)
+getchat_search_location = "eastus" # eastus2 sem capacidade free — usando eastus
+
+# --- Variáveis sensíveis (NÃO commitar valores reais) -------------------------
+# Usar scripts/.env (gitignored) ou TF_VAR_* no ambiente / GitHub Secrets:
+#
+#   TF_VAR_pg_admin_password         — senha do PostgreSQL
+#   TF_VAR_iai_device_token          — token de autenticação IAI
+#   TF_VAR_getchat_anthropic_api_key — Anthropic API key (GetChat)
+#
+# Ver scripts/.env.example para o template.

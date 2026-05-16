@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traduxai-api
+  namespace: traduxai-dev
+  labels:
+    app: traduxai-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traduxai-api
+  template:
+    metadata:
+      labels:
+        app: traduxai-api
+    spec:
+      volumes:
+        - name: kv-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: traduxai-kv-secrets
+      containers:
+        - name: api
+          image: ACR_PLACEHOLDER/traduxai-api:latest
+          ports:
+            - containerPort: 8010
+              name: http
+          envFrom:
+            - secretRef:
+                name: traduxai-secrets
+          env:
+            - name: ENVIRONMENT
+              value: production
+            - name: KEYCLOAK_REALM
+              value: traduxai
+          volumeMounts:
+            - name: kv-secrets
+              mountPath: /mnt/secrets
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8010
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8010
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi

@@ -23,7 +23,7 @@ kubectl get nodes -o wide 2>/dev/null && ok "Nodes OK" || fail "kubectl não dis
 # 2. Pods por namespace
 echo ""
 echo "── Pods ─────────────────────────────────────────"
-for ns in beeai-dev beeai-prod bovipro-dev bovipro-prod iai-dev iai-prod; do
+for ns in beeai-dev beeai-prod bovipro-dev bovipro-prod iai-dev iai-prod getchat-dev; do
   echo "  namespace: $ns"
   if kubectl get ns "$ns" &>/dev/null; then
     kubectl get pods -n "$ns" --no-headers 2>/dev/null | while read -r line; do
@@ -79,6 +79,7 @@ check_health "BoviPro DEV"  bovipro-dev  bovipro-gateway  /api/health
 check_health "BoviPro PROD" bovipro-prod bovipro-gateway  /api/health
 check_health "IAI DEV"      iai-dev      iai-core          /health
 check_health "IAI PROD"     iai-prod     iai-core          /health
+check_health "GetChat DEV"  getchat-dev  getchat-gateway   /health/ready
 
 # 5. Uso de recursos
 echo ""

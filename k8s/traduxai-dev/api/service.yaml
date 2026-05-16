@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traduxai-api
+  namespace: traduxai-dev
+  labels:
+    app: traduxai-api
+spec:
+  type: ClusterIP
+  selector:
+    app: traduxai-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8010

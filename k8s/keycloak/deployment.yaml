@@ -1,0 +1,77 @@
+###############################################################################
+# Deployment — Keycloak 26 (Identity Provider compartilhado _heck)
+# Realm: heck — utilizado por GetChat, BeeAI e apps futuras
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      serviceAccountName: default
+      volumes:
+        - name: kv-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: keycloak-kv-secrets
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.2
+          args: ["start"]
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: keycloak-config
+          env:
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KEYCLOAK_ADMIN_PASSWORD
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_DB_PASSWORD
+          volumeMounts:
+            - name: kv-secrets
+              mountPath: "/mnt/secrets"
+              readOnly: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            failureThreshold: 3

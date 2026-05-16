@@ -7,6 +7,11 @@ output "openai_endpoint" {
   description = "Azure OpenAI endpoint URL (used as AI_FOUNDRY_ENDPOINT)."
 }
 
+output "openai_primary_key" {
+  value     = azurerm_cognitive_account.openai.primary_access_key
+  sensitive = true
+}
+
 output "openai_id" {
   value = azurerm_cognitive_account.openai.id
 }

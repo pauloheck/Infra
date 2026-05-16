@@ -1,0 +1,18 @@
+###############################################################################
+# ConfigMap — Keycloak
+# KC_DB_URL: ajustar hostname do PostgreSQL após terraform apply
+###############################################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: keycloak
+data:
+  KC_DB: "postgres"
+  KC_DB_URL: "jdbc:postgresql://pg-shared-dev.postgres.database.azure.com:5432/keycloak"
+  KC_DB_USERNAME: "keycloak"
+  KEYCLOAK_ADMIN: "admin"
+  KC_HTTP_ENABLED: "true"
+  KC_HOSTNAME_STRICT: "false"
+  KC_PROXY: "edge"
+  KC_LOG_LEVEL: "INFO"

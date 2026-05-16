@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traduxai-dev
+  labels:
+    app.kubernetes.io/managed-by: kubectl
+    environment: dev
+    app: traduxai

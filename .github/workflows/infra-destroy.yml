@@ -33,6 +33,9 @@ jobs:
     env:
       TF_VAR_pg_admin_password: ${{ secrets.TF_VAR_pg_admin_password }}
       TF_VAR_iai_device_token: ${{ secrets.TF_VAR_iai_device_token }}
+      TF_VAR_getchat_anthropic_api_key: ${{ secrets.TF_VAR_getchat_anthropic_api_key }}
+      TF_VAR_traduxai_nextauth_secret: ${{ secrets.TF_VAR_traduxai_nextauth_secret }}
+      TF_VAR_traduxai_keycloak_client_secret: ${{ secrets.TF_VAR_traduxai_keycloak_client_secret }}
 
     steps:
       - uses: actions/checkout@v4

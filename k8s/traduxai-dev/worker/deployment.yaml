@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traduxai-worker
+  namespace: traduxai-dev
+  labels:
+    app: traduxai-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traduxai-worker
+  template:
+    metadata:
+      labels:
+        app: traduxai-worker
+    spec:
+      volumes:
+        - name: kv-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: traduxai-kv-secrets
+      containers:
+        - name: worker
+          image: ACR_PLACEHOLDER/traduxai-worker:latest
+          envFrom:
+            - secretRef:
+                name: traduxai-secrets
+          env:
+            - name: ENVIRONMENT
+              value: production
+          volumeMounts:
+            - name: kv-secrets
+              mountPath: /mnt/secrets
+              readOnly: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1500m
+              memory: 1536Mi

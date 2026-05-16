@@ -65,6 +65,61 @@ output "bovipro_prod_public_ip" {
   description = "IP público estático BoviPro PROD — DNS: bovipro.com.br"
 }
 
+output "kv_getchat_name" {
+  value       = module.kv_getchat.key_vault_name
+  description = "Nome do Key Vault GetChat."
+}
+
+output "getchat_search_endpoint" {
+  value       = "https://${azurerm_search_service.getchat.name}.search.windows.net"
+  description = "Endpoint do Azure AI Search (GetChat RAG)."
+}
+
+output "getchat_oai_endpoint" {
+  value       = azurerm_cognitive_account.openai_getchat.endpoint
+  description = "Endpoint Azure OpenAI (GetChat embeddings)."
+}
+
+output "kv_traduxai_name" {
+  value       = module.kv_traduxai.key_vault_name
+  description = "Nome do Key Vault Tradux AI."
+}
+
+output "traduxai_translator_endpoint" {
+  value       = module.traduxai.translator_endpoint
+  description = "Endpoint Azure AI Translator."
+}
+
+output "traduxai_docint_endpoint" {
+  value       = module.traduxai.docint_endpoint
+  description = "Endpoint Azure Document Intelligence."
+}
+
+output "traduxai_language_endpoint" {
+  value       = module.traduxai.language_endpoint
+  description = "Endpoint Azure AI Language."
+}
+
+output "traduxai_storage_url" {
+  value       = module.traduxai.storage_account_url
+  description = "URL da Storage Account Tradux AI."
+}
+
+output "traduxai_search_endpoint" {
+  value       = module.traduxai.search_endpoint
+  description = "Endpoint Azure AI Search (Translation Memory)."
+}
+
+output "traduxai_servicebus_namespace" {
+  value       = module.traduxai.servicebus_namespace
+  description = "Namespace do Azure Service Bus Tradux AI."
+}
+
+output "traduxai_storage_account_name" {
+  value       = module.traduxai.storage_account_name
+  description = "Storage Account Tradux AI."
+}
+
 # ─── Instruções pós-apply ────────────────────────────────────────────────────
 #
 # 1. Criar secrets manuais nos Key Vaults:
@@ -73,6 +128,9 @@ output "bovipro_prod_public_ip" {
 #
 #    az keyvault secret set --vault-name kv-bovipro-dev \
 #      --name bovipro-jwt-secret --value "$(openssl rand -base64 48)"
+#
+#    az keyvault secret set --vault-name kv-getchat-dev \
+#      --name jwt-secret-key --value "$(openssl rand -base64 48)"
 #
 # 2. Atualizar GitHub Secrets nos três repos:
 #
