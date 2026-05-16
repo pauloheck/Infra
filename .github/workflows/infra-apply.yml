@@ -34,11 +34,11 @@ jobs:
     environment: dev
 
     env:
-      TF_VAR_pg_admin_password: ${{ secrets.TF_VAR_pg_admin_password }}
-      TF_VAR_iai_device_token: ${{ secrets.TF_VAR_iai_device_token }}
-      TF_VAR_getchat_anthropic_api_key: ${{ secrets.TF_VAR_getchat_anthropic_api_key }}
-      TF_VAR_traduxai_nextauth_secret: ${{ secrets.TF_VAR_traduxai_nextauth_secret }}
-      TF_VAR_traduxai_keycloak_client_secret: ${{ secrets.TF_VAR_traduxai_keycloak_client_secret }}
+      TF_VAR_pg_admin_password: ${{ secrets.TF_VAR_PG_ADMIN_PASSWORD }}
+      TF_VAR_iai_device_token: ${{ secrets.TF_VAR_IAI_DEVICE_TOKEN }}
+      TF_VAR_getchat_anthropic_api_key: ${{ secrets.TF_VAR_GETCHAT_ANTHROPIC_API_KEY }}
+      TF_VAR_traduxai_nextauth_secret: ${{ secrets.TF_VAR_TRADUXAI_NEXTAUTH_SECRET }}
+      TF_VAR_traduxai_keycloak_client_secret: ${{ secrets.TF_VAR_TRADUXAI_KEYCLOAK_CLIENT_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
