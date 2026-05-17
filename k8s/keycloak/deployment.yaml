@@ -22,17 +22,10 @@ spec:
         app: keycloak
     spec:
       serviceAccountName: default
-      volumes:
-        - name: kv-secrets
-          csi:
-            driver: secrets-store.csi.k8s.io
-            readOnly: true
-            volumeAttributes:
-              secretProviderClass: keycloak-kv-secrets
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.2
-          args: ["start"]
+          args: ["start-dev"]
           ports:
             - containerPort: 8080
               name: http
@@ -50,10 +43,6 @@ spec:
                 secretKeyRef:
                   name: keycloak-secrets
                   key: KC_DB_PASSWORD
-          volumeMounts:
-            - name: kv-secrets
-              mountPath: "/mnt/secrets"
-              readOnly: true
           resources:
             requests:
               cpu: 200m
@@ -63,15 +52,22 @@ spec:
               memory: 1Gi
           readinessProbe:
             httpGet:
-              path: /realms/master
+              path: /auth/realms/master
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 15
             failureThreshold: 5
+          startupProbe:
+            httpGet:
+              path: /auth/realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 20
           livenessProbe:
             httpGet:
-              path: /realms/master
+              path: /auth/realms/master
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 0
             periodSeconds: 30
             failureThreshold: 3

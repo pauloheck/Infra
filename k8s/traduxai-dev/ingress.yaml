@@ -10,10 +10,27 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
+    - host: traduxai-heck.eastus2.cloudapp.azure.com
+      http:
+        paths:
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: traduxai-api
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traduxai-web
+                port:
+                  number: 80
     - host: traduxai.heck.app
       http:
         paths:
-          - path: /api
+          - path: /api/v1
             pathType: Prefix
             backend:
               service:
@@ -29,13 +46,6 @@ spec:
                   number: 80
     - http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: traduxai-api
-                port:
-                  number: 80
           - path: /
             pathType: Prefix
             backend:
