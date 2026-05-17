@@ -38,6 +38,8 @@ spec:
               value: production
             - name: KEYCLOAK_REALM
               value: traduxai
+            - name: TRANSLATOR_REGION
+              value: eastus2
           volumeMounts:
             - name: kv-secrets
               mountPath: /mnt/secrets
