@@ -32,9 +32,11 @@ spec:
               name: http
           env:
             - name: NEXTAUTH_URL
-              value: https://traduxai.heck.app
+              value: http://traduxai-heck.eastus2.cloudapp.azure.com
             - name: NEXT_PUBLIC_API_URL
-              value: https://traduxai.heck.app/api/v1
+              value: http://traduxai-heck.eastus2.cloudapp.azure.com
+            - name: TRADUXAI_API_URL
+              value: http://traduxai-api.traduxai-dev.svc.cluster.local
             - name: KEYCLOAK_URL
               value: http://keycloak.keycloak.svc.cluster.local:8080
             - name: KEYCLOAK_CLIENT_ID
