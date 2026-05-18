@@ -26,6 +26,10 @@ set "ENV_SH=%SCRIPT_DIR%.env"
 set "RG_NAME=rg-shared-dev"
 set "AKS_NAME=aks-shared-dev"
 set "PG_NAME=psql-heckio-dev"
+set "TFSTATE_RG=rg-beeai-platform"
+set "TFSTATE_STORAGE=stbeeaitfstategrw1t4"
+set "TFSTATE_CONTAINER=tfstate"
+set "TFSTATE_LOCATION=eastus2"
 if not defined ACR_NAME set "ACR_NAME=acrheckiodev"
 
 set "SKIP_TERRAFORM=0"
@@ -107,6 +111,8 @@ if not defined TF_VAR_traduxai_nextauth_secret (
 if "%SKIP_TERRAFORM%"=="0" (
   echo.
   echo [1/5] Terraform shared-dev
+  call :ensure_terraform_backend
+  if errorlevel 1 goto fail
   pushd "%TF_DIR%" || goto fail
   terraform init -reconfigure -input=false || goto fail
   call :import_existing_keycloak
@@ -275,6 +281,30 @@ echo AKS %AKS_NAME%: %AKS_STATE%
 if /I "%AKS_STATE%"=="Stopped" (
   echo Iniciando AKS...
   call az aks start --resource-group "%RG_NAME%" --name "%AKS_NAME%" || exit /b 1
+)
+exit /b 0
+
+:ensure_terraform_backend
+echo Verificando backend remoto do Terraform...
+call az group show --name "%TFSTATE_RG%" >nul 2>nul
+if errorlevel 1 (
+  echo Criando Resource Group do tfstate: %TFSTATE_RG%
+  call az group create --name "%TFSTATE_RG%" --location "%TFSTATE_LOCATION%" --tags project=shared env=dev managedBy=script >nul || exit /b 1
+)
+call az storage account show --resource-group "%TFSTATE_RG%" --name "%TFSTATE_STORAGE%" >nul 2>nul
+if errorlevel 1 (
+  echo Criando Storage Account do tfstate: %TFSTATE_STORAGE%
+  call az storage account create --resource-group "%TFSTATE_RG%" --name "%TFSTATE_STORAGE%" --location "%TFSTATE_LOCATION%" --sku Standard_LRS --kind StorageV2 --min-tls-version TLS1_2 --allow-blob-public-access false >nul || exit /b 1
+)
+call az storage container create --name "%TFSTATE_CONTAINER%" --account-name "%TFSTATE_STORAGE%" --auth-mode login >nul 2>nul
+if errorlevel 1 (
+  set "TFSTATE_KEY="
+  for /f "usebackq delims=" %%K in (`call az storage account keys list --resource-group "%TFSTATE_RG%" --account-name "%TFSTATE_STORAGE%" --query "[0].value" -o tsv 2^>nul`) do set "TFSTATE_KEY=%%K"
+  if not defined TFSTATE_KEY (
+    echo ERRO: nao consegui obter a chave da Storage Account do tfstate.
+    exit /b 1
+  )
+  call az storage container create --name "%TFSTATE_CONTAINER%" --account-name "%TFSTATE_STORAGE%" --account-key "!TFSTATE_KEY!" >nul || exit /b 1
 )
 exit /b 0
 
