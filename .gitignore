@@ -13,6 +13,7 @@ override.tf.json
 
 # Variáveis sensíveis
 scripts/.env
+scripts/.env.bat
 *.auto.tfvars
 !*.auto.tfvars.example
 

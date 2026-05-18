@@ -70,6 +70,11 @@ output "kv_getchat_name" {
   description = "Nome do Key Vault GetChat."
 }
 
+output "kv_keycloak_name" {
+  value       = module.kv_keycloak.key_vault_name
+  description = "Nome do Key Vault Keycloak compartilhado."
+}
+
 output "getchat_search_endpoint" {
   value       = "https://${azurerm_search_service.getchat.name}.search.windows.net"
   description = "Endpoint do Azure AI Search (GetChat RAG)."

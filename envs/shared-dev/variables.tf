@@ -8,6 +8,13 @@ variable "project" {
 }
 
 # --- Tradux AI ----------------------------------------------------------------
+variable "keycloak_admin_password" {
+  type        = string
+  sensitive   = true
+  default     = "dev-change-me-before-prod"
+  description = "Senha do admin do Keycloak compartilhado em dev. Sobrescrever em terraform.tfvars/CI."
+}
+
 variable "traduxai_nextauth_secret" {
   type        = string
   sensitive   = true

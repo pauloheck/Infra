@@ -833,6 +833,77 @@ resource "azurerm_key_vault_secret" "getchat_anthropic_key" {
   depends_on   = [module.kv_getchat, azurerm_role_assignment.terraform_kv_getchat]
 }
 
+###############################################################################
+# KEYCLOAK COMPARTILHADO
+# Necessario para login do Tradux AI e demais apps que usam OIDC.
+###############################################################################
+
+# ---------- Database Keycloak --------------------------------------------------
+resource "azurerm_postgresql_flexible_server_database" "keycloak" {
+  name      = "keycloak"
+  server_id = module.postgres.server_id
+  charset   = "UTF8"
+  collation = "en_US.utf8"
+}
+
+# ---------- Key Vault Keycloak -------------------------------------------------
+module "kv_keycloak" {
+  source = "../../modules/keyvault"
+
+  project             = "keycloak"
+  env                 = var.env
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  enable_diagnostics  = false
+  name_override       = "kv-keycloak-dev"
+
+  depends_on = [module.aks]
+}
+
+# ---------- RBAC: AKS identity -> Secrets Officer (KV Keycloak) ----------------
+resource "azurerm_role_assignment" "aks_kv_keycloak" {
+  scope                            = module.kv_keycloak.key_vault_id
+  role_definition_name             = "Key Vault Secrets Officer"
+  principal_id                     = module.aks.aks_identity_principal_id
+  skip_service_principal_aad_check = true
+  depends_on                       = [module.kv_keycloak, module.aks]
+}
+
+# ---------- RBAC: AKS kubelet identity -> Secrets User (CSI Driver) ------------
+resource "azurerm_role_assignment" "kubelet_kv_keycloak" {
+  scope                            = module.kv_keycloak.key_vault_id
+  role_definition_name             = "Key Vault Secrets User"
+  principal_id                     = module.aks.kubelet_identity_object_id
+  skip_service_principal_aad_check = true
+  depends_on                       = [module.kv_keycloak, module.aks]
+}
+
+# ---------- RBAC: Terraform (CI/CD) -> Secrets Officer -------------------------
+resource "azurerm_role_assignment" "terraform_kv_keycloak" {
+  scope                = module.kv_keycloak.key_vault_id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azurerm_client_config.current.object_id
+  depends_on           = [module.kv_keycloak]
+  lifecycle { ignore_changes = [principal_id] }
+}
+
+# ---------- Secrets Keycloak ---------------------------------------------------
+resource "azurerm_key_vault_secret" "keycloak_admin_password" {
+  name         = "keycloak-admin-password"
+  value        = var.keycloak_admin_password
+  key_vault_id = module.kv_keycloak.key_vault_id
+  depends_on   = [module.kv_keycloak, azurerm_role_assignment.terraform_kv_keycloak]
+}
+
+resource "azurerm_key_vault_secret" "keycloak_db_password" {
+  name         = "keycloak-db-password"
+  value        = var.pg_admin_password
+  key_vault_id = module.kv_keycloak.key_vault_id
+  depends_on   = [module.kv_keycloak, module.postgres, azurerm_role_assignment.terraform_kv_keycloak]
+}
+
 # Nota: JWT secret — criar manualmente após o apply (segredo gerado localmente, não pelo Terraform):
 #   az keyvault secret set --vault-name kv-getchat-dev --name jwt-secret-key --value "$(openssl rand -base64 48)"
 
