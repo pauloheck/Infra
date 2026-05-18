@@ -3,7 +3,7 @@
 ## 1. Pré-requisitos Terraform
 
 Antes de aplicar os manifests, o Terraform deve ter criado:
-- Key Vault `kv-keycloak-dev` com secrets:
+- Key Vault `kv-keycloak-heckdev` com secrets:
   - `keycloak-admin-password` — senha do admin Keycloak
   - `keycloak-db-password` — senha do usuário `keycloak` no PostgreSQL
 - Banco de dados `keycloak` no PostgreSQL Flexible Server (`pg-shared-dev`)

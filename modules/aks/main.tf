@@ -135,6 +135,12 @@ resource "azurerm_kubernetes_cluster" "main" {
     secret_rotation_enabled  = true
     secret_rotation_interval = "2m"
   }
+
+  lifecycle {
+    ignore_changes = [
+      default_node_pool[0].upgrade_settings,
+    ]
+  }
 }
 
 # ---------- User node pool (opcional) ----------------------------------------

@@ -857,7 +857,7 @@ module "kv_keycloak" {
   tags                = var.tags
   tenant_id           = data.azurerm_client_config.current.tenant_id
   enable_diagnostics  = false
-  name_override       = "kv-keycloak-dev"
+  name_override       = "kv-keycloak-heckdev"
 
   depends_on = [module.aks]
 }

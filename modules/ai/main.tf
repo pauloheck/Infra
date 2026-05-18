@@ -82,6 +82,10 @@ resource "azurerm_role_assignment" "kubelet_openai" {
   role_definition_name             = "Cognitive Services OpenAI User"
   principal_id                     = var.kubelet_identity_object_id
   skip_service_principal_aad_check = true
+
+  lifecycle {
+    ignore_changes = [skip_service_principal_aad_check]
+  }
 }
 
 resource "azurerm_role_assignment" "kubelet_content_safety" {

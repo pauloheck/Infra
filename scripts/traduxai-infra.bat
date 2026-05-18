@@ -30,6 +30,9 @@ set "TFSTATE_RG=rg-beeai-platform"
 set "TFSTATE_STORAGE=stbeeaitfstategrw1t4"
 set "TFSTATE_CONTAINER=tfstate"
 set "TFSTATE_LOCATION=eastus2"
+set "TRADUX_DNS_LABEL=traduxai-heck"
+set "INGRESS_NGINX_VERSION=controller-v1.15.1"
+set "INGRESS_NGINX_MANIFEST=https://raw.githubusercontent.com/kubernetes/ingress-nginx/%INGRESS_NGINX_VERSION%/deploy/static/provider/cloud/deploy.yaml"
 if not defined ACR_NAME set "ACR_NAME=acrheckiodev"
 
 set "SKIP_TERRAFORM=0"
@@ -110,7 +113,7 @@ if not defined TF_VAR_traduxai_nextauth_secret (
 
 if "%SKIP_TERRAFORM%"=="0" (
   echo.
-  echo [1/5] Terraform shared-dev
+  echo [1/6] Terraform shared-dev
   call :ensure_terraform_backend
   if errorlevel 1 goto fail
   pushd "%TF_DIR%" || goto fail
@@ -127,28 +130,28 @@ if "%SKIP_TERRAFORM%"=="0" (
   terraform apply -var-file="shared-dev.tfvars" -auto-approve || goto fail
   popd
 ) else (
-  echo [1/5] Terraform pulado ^(--skip-terraform^)
+  echo [1/6] Terraform pulado ^(--skip-terraform^)
 )
 
 if "%SKIP_RUNTIME_START%"=="0" (
   echo.
-  echo [2/5] Garantindo AKS e PostgreSQL ligados
+  echo [2/6] Garantindo AKS e PostgreSQL ligados
   call :ensure_postgres_running
   if errorlevel 1 goto fail
   call :ensure_aks_running
   if errorlevel 1 goto fail
 ) else (
-  echo [2/5] Start de AKS/PostgreSQL pulado ^(--skip-runtime-start^)
+  echo [2/6] Start de AKS/PostgreSQL pulado ^(--skip-runtime-start^)
 )
 
 if "%SKIP_K8S%"=="1" (
   echo.
-  echo [3/5] Kubernetes pulado ^(--skip-k8s^)
+  echo [3/6] Kubernetes pulado ^(--skip-k8s^)
   goto done
 )
 
 echo.
-echo [3/5] Configurando kubectl
+echo [3/6] Configurando kubectl
 call az aks get-credentials --resource-group "%RG_NAME%" --name "%AKS_NAME%" --admin --overwrite-existing || goto fail
 
 set "KUBELET_CLIENT_ID="
@@ -159,9 +162,14 @@ if defined KUBELET_CLIENT_ID (
   echo AVISO: nao consegui obter o clientId da kubelet identity; usarei os manifests como estao.
 )
 
+echo.
+echo [4/6] Garantindo ingress-nginx compartilhado
+call :ensure_ingress_nginx
+if errorlevel 1 goto fail
+
 if "%SKIP_KEYCLOAK%"=="0" (
   echo.
-  echo [4/5] Aplicando Keycloak compartilhado
+  echo [5/6] Aplicando Keycloak compartilhado
   kubectl apply -f "%K8S_KEYCLOAK%\namespace.yaml" || goto fail
   call :apply_secret_provider "%K8S_KEYCLOAK%\secret-provider.yaml"
   if errorlevel 1 goto fail
@@ -172,11 +180,11 @@ if "%SKIP_KEYCLOAK%"=="0" (
   if errorlevel 1 echo AVISO: Keycloak ainda nao ficou pronto; verifique com kubectl get pods -n keycloak.
 ) else (
   echo.
-  echo [4/5] Keycloak pulado ^(--skip-keycloak^)
+  echo [5/6] Keycloak pulado ^(--skip-keycloak^)
 )
 
 echo.
-echo [5/5] Aplicando base Kubernetes Tradux AI
+echo [6/6] Aplicando base Kubernetes Tradux AI
 kubectl apply -f "%K8S_TRADUX%\namespace.yaml" || goto fail
 kubectl apply -f "%K8S_TRADUX%\network-policy.yaml" || goto fail
 call :apply_secret_provider "%K8S_TRADUX%\api\secret-provider.yaml"
@@ -184,11 +192,6 @@ if errorlevel 1 goto fail
 kubectl apply -f "%K8S_TRADUX%\api\service.yaml" || goto fail
 kubectl apply -f "%K8S_TRADUX%\web\service.yaml" || goto fail
 kubectl apply -f "%K8S_TRADUX%\ingress.yaml" || goto fail
-
-kubectl get ingressclass nginx >nul 2>nul
-if errorlevel 1 (
-  echo AVISO: ingressClass nginx nao encontrada. A URL publica depende do ingress controller ja instalado no AKS.
-)
 
 if "%APP_DEPLOY%"=="1" (
   call :apply_app_deployments
@@ -314,9 +317,9 @@ rem importa para o state antes do apply para evitar conflito de "already exists"
 terraform state show module.kv_keycloak.azurerm_key_vault.main >nul 2>nul
 if errorlevel 1 (
   set "KV_KEYCLOAK_ID="
-  for /f "usebackq delims=" %%I in (`call az keyvault show --resource-group "%RG_NAME%" --name "kv-keycloak-dev" --query "id" -o tsv 2^>nul`) do set "KV_KEYCLOAK_ID=%%I"
+  for /f "usebackq delims=" %%I in (`call az keyvault show --resource-group "%RG_NAME%" --name "kv-keycloak-heckdev" --query "id" -o tsv 2^>nul`) do set "KV_KEYCLOAK_ID=%%I"
   if defined KV_KEYCLOAK_ID (
-    echo Importando Key Vault existente kv-keycloak-dev para o state Terraform...
+    echo Importando Key Vault existente kv-keycloak-heckdev para o state Terraform...
     terraform import module.kv_keycloak.azurerm_key_vault.main "!KV_KEYCLOAK_ID!" || exit /b 1
   )
 )
@@ -343,6 +346,65 @@ kubectl apply -f "%SPC_OUT%"
 set "SPC_STATUS=!ERRORLEVEL!"
 del "%SPC_OUT%" >nul 2>nul
 exit /b %SPC_STATUS%
+
+:ensure_ingress_nginx
+call :discover_ingress_public_ip
+if errorlevel 1 exit /b 1
+
+if defined INGRESS_PIP_NAME (
+  echo DNS publico %TRADUX_DNS_LABEL%.eastus2.cloudapp.azure.com no IP !INGRESS_PUBLIC_IP!
+  call az network public-ip update --resource-group "!AKS_NODE_RG!" --name "!INGRESS_PIP_NAME!" --dns-name "%TRADUX_DNS_LABEL%" --only-show-errors >nul || exit /b 1
+) else (
+  echo AVISO: nao encontrei Public IP existente do AKS; o Service LoadBalancer pode criar um novo IP.
+)
+
+kubectl get ingressclass nginx >nul 2>nul
+if errorlevel 1 (
+  echo Instalando ingress-nginx %INGRESS_NGINX_VERSION%...
+  kubectl apply -f "%INGRESS_NGINX_MANIFEST%" || exit /b 1
+) else (
+  echo ingressClass nginx ja existe.
+)
+
+if defined INGRESS_PUBLIC_IP (
+  call :patch_ingress_service_ip
+  if errorlevel 1 exit /b 1
+)
+
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=8m || exit /b 1
+kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=8m || exit /b 1
+exit /b 0
+
+:discover_ingress_public_ip
+set "AKS_NODE_RG="
+set "INGRESS_PIP_NAME="
+set "INGRESS_PUBLIC_IP="
+for /f "usebackq delims=" %%G in (`call az aks show --resource-group "%RG_NAME%" --name "%AKS_NAME%" --query "nodeResourceGroup" -o tsv 2^>nul`) do set "AKS_NODE_RG=%%G"
+if not defined AKS_NODE_RG (
+  echo ERRO: nao consegui descobrir o resource group gerenciado do AKS.
+  exit /b 1
+)
+
+for /f "usebackq tokens=1,2" %%A in (`call az network public-ip list --resource-group "!AKS_NODE_RG!" --query "[?dnsSettings.domainNameLabel=='%TRADUX_DNS_LABEL%'] | [0].{name:name,ip:ipAddress}" -o tsv 2^>nul`) do (
+  set "INGRESS_PIP_NAME=%%A"
+  set "INGRESS_PUBLIC_IP=%%B"
+)
+
+if not defined INGRESS_PIP_NAME (
+  for /f "usebackq tokens=1,2" %%A in (`call az network public-ip list --resource-group "!AKS_NODE_RG!" --query "[?ipConfiguration!=null] | [0].{name:name,ip:ipAddress}" -o tsv 2^>nul`) do (
+    set "INGRESS_PIP_NAME=%%A"
+    set "INGRESS_PUBLIC_IP=%%B"
+  )
+)
+exit /b 0
+
+:patch_ingress_service_ip
+set "INGRESS_PATCH=%TEMP%\traduxai-ingress-%RANDOM%%RANDOM%.json"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$patch=@{spec=@{loadBalancerIP=$env:INGRESS_PUBLIC_IP}} | ConvertTo-Json -Compress; Set-Content -LiteralPath $env:INGRESS_PATCH -Value $patch -Encoding ascii" || exit /b 1
+kubectl patch svc ingress-nginx-controller -n ingress-nginx --type=merge --patch-file "%INGRESS_PATCH%" || exit /b 1
+set "PATCH_STATUS=!ERRORLEVEL!"
+del "%INGRESS_PATCH%" >nul 2>nul
+exit /b %PATCH_STATUS%
 
 :apply_app_deployments
 echo.
