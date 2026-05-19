@@ -46,3 +46,7 @@ output "vision_project_id" {
   description = "A ser preenchido manualmente após criar o projeto no Custom Vision portal"
   value       = "PENDING — criar projeto em https://customvision.ai"
 }
+
+output "document_translator_endpoint" {
+  value = "https://translator-${local.name_suffix}.cognitiveservices.azure.com/"
+}

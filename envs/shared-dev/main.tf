@@ -975,7 +975,7 @@ module "traduxai" {
   storage_account_name      = "sttraduxaiheckdev"
   search_sku                = "free"
   enable_search             = false
-  translator_sku            = "F0"
+  translator_sku            = "S1"
   document_intelligence_sku = "F0"
   custom_vision_sku         = "F0"
   language_sku              = "F0"

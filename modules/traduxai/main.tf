@@ -247,3 +247,9 @@ resource "azurerm_key_vault_secret" "storage_connection" {
   value        = azurerm_storage_account.documents.primary_connection_string
   key_vault_id = var.keyvault_id
 }
+
+resource "azurerm_key_vault_secret" "document_translator_endpoint" {
+  name         = "traduxai-document-translator-endpoint"
+  value        = "https://translator-${local.name_suffix}.cognitiveservices.azure.com/"
+  key_vault_id = var.keyvault_id
+}
