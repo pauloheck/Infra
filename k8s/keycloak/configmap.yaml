@@ -17,5 +17,5 @@ data:
   KC_PROXY: "edge"
   KC_LOG_LEVEL: "INFO"
   KC_HOSTNAME: "traduxai-heck.eastus2.cloudapp.azure.com"
-  KC_HOSTNAME_URL: "http://traduxai-heck.eastus2.cloudapp.azure.com"
+  KC_HOSTNAME_URL: "https://traduxai-heck.eastus2.cloudapp.azure.com"
   KC_HTTP_RELATIVE_PATH: "/auth"

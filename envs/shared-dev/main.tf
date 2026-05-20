@@ -1004,14 +1004,14 @@ resource "azurerm_key_vault_secret" "traduxai_appinsights" {
 
 resource "azurerm_key_vault_secret" "traduxai_keycloak_url" {
   name         = "traduxai-keycloak-url"
-  value        = "http://keycloak.keycloak.svc.cluster.local:8080"
+  value        = "http://keycloak.keycloak.svc.cluster.local:8080"   # URL interna K8s — usada pelo backend para chamadas server-side
   key_vault_id = module.kv_traduxai.key_vault_id
   depends_on   = [module.kv_traduxai, azurerm_role_assignment.terraform_kv_traduxai]
 }
 
 resource "azurerm_key_vault_secret" "traduxai_keycloak_issuer" {
   name         = "traduxai-keycloak-issuer"
-  value        = "http://keycloak.keycloak.svc.cluster.local:8080/realms/traduxai"
+  value        = "https://traduxai-heck.eastus2.cloudapp.azure.com/auth/realms/traduxai"   # URL externa — deve bater com o campo `iss` dos JWTs emitidos pelo Keycloak
   key_vault_id = module.kv_traduxai.key_vault_id
   depends_on   = [module.kv_traduxai, azurerm_role_assignment.terraform_kv_traduxai]
 }

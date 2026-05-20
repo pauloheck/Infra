@@ -1,0 +1,29 @@
+# Ingress separado para reescrever /resources/* → /auth/resources/* no Keycloak.
+# Necessário porque Keycloak start-dev gera links de tema sem o prefixo /auth.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traduxai-keycloak-resources
+  namespace: traduxai-dev
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /auth/resources/$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - traduxai-heck.eastus2.cloudapp.azure.com
+      secretName: traduxai-tls
+  rules:
+    - host: traduxai-heck.eastus2.cloudapp.azure.com
+      http:
+        paths:
+          - path: /resources(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: traduxai-keycloak
+                port:
+                  number: 8080

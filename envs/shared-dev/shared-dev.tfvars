@@ -22,7 +22,7 @@ subnet_appgw_prefix = ["10.10.18.0/24"]
 # --- AKS (2 nós para suportar todos os projetos simultaneamente) ---------------
 kubernetes_version = "1.33"
 system_node_count  = 2
-system_vm_size     = "Standard_D4als_v7" # 4 vCPU / 8 GB RAM — AMD v7, ~$112/mês rodando / ~$14/mês parado
+system_vm_size     = "Standard_D2als_v7" # 2 vCPU / 4 GB RAM — AMD v7, ~$82/mês rodando / ~$14/mês parado
 
 # --- PostgreSQL (B1ms compartilhado) -----------------------------------------
 pg_sku        = "B_Standard_B1ms"

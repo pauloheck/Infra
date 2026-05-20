@@ -49,11 +49,11 @@ kubectl get svc -A --field-selector spec.type=LoadBalancer \
   if [[ "$ip" == "<none>" || -z "$ip" ]]; then
     fail "$ns/$name — IP pendente"
   else
-    ok "$ns/$name → http://$ip"
+    ok "$ns/$name → https://$ip"
   fi
 done
 
-# 4. Health checks HTTP
+# 4. Health checks HTTPS
 echo ""
 echo "── Health Checks ────────────────────────────────"
 
@@ -63,10 +63,11 @@ check_health() {
   ip=$(kubectl get svc "$svc" -n "$ns" \
     -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   if [[ -n "$ip" ]]; then
-    if curl -sf --max-time 5 "http://$ip$path" > /dev/null; then
-      ok "$label → http://$ip$path"
+    # -k necessário: cert TLS é vinculado ao hostname, não ao IP
+    if curl -sfk --max-time 5 "https://$ip$path" > /dev/null; then
+      ok "$label → https://$ip$path"
     else
-      fail "$label → http://$ip$path (sem resposta)"
+      fail "$label → https://$ip$path (sem resposta)"
     fi
   else
     info "$label → sem IP (namespace pode não existir)"

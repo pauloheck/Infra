@@ -424,7 +424,7 @@ echo.
 echo ============================================================================
 echo   Infra Tradux AI concluida
 echo ============================================================================
-echo URL publica esperada: http://traduxai-heck.eastus2.cloudapp.azure.com
+echo URL publica esperada: https://traduxai-heck.eastus2.cloudapp.azure.com
 echo.
 echo Lembrete de custo: ao terminar os trabalhos, pare AKS/PostgreSQL.
 echo ============================================================================

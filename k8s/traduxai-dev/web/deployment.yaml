@@ -17,28 +17,23 @@ spec:
       labels:
         app: traduxai-web
     spec:
-      volumes:
-        - name: kv-secrets
-          csi:
-            driver: secrets-store.csi.k8s.io
-            readOnly: true
-            volumeAttributes:
-              secretProviderClass: traduxai-kv-secrets
       containers:
         - name: web
-          image: ACR_PLACEHOLDER/traduxai-web:latest
+          image: acrheckiodev.azurecr.io/traduxai-web:latest
           ports:
             - containerPort: 3000
               name: http
           env:
             - name: NEXTAUTH_URL
-              value: http://traduxai-heck.eastus2.cloudapp.azure.com
+              value: https://traduxai-heck.eastus2.cloudapp.azure.com
             - name: NEXT_PUBLIC_API_URL
-              value: http://traduxai-heck.eastus2.cloudapp.azure.com
+              value: https://traduxai-heck.eastus2.cloudapp.azure.com
             - name: TRADUXAI_API_URL
-              value: http://traduxai-api.traduxai-dev.svc.cluster.local
+              value: http://traduxai-api.traduxai-dev.svc.cluster.local:8010
             - name: KEYCLOAK_URL
               value: http://keycloak.keycloak.svc.cluster.local:8080
+            - name: KEYCLOAK_ISSUER
+              value: https://traduxai-heck.eastus2.cloudapp.azure.com/auth/realms/traduxai
             - name: KEYCLOAK_CLIENT_ID
               value: traduxai-web
             - name: AUTH_TRUST_HOST
@@ -46,22 +41,18 @@ spec:
           envFrom:
             - secretRef:
                 name: traduxai-secrets
-          volumeMounts:
-            - name: kv-secrets
-              mountPath: /mnt/secrets
-              readOnly: true
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/auth/providers
               port: 3000
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 6
+            timeoutSeconds: 10
+            failureThreshold: 10
           resources:
             requests:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 750m
+              memory: 768Mi

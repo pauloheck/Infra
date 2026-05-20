@@ -11,3 +11,4 @@ resources:
   - web/service.yaml
   - web/deployment.yaml
   - ingress.yaml
+  - keycloak-resources-ingress.yaml

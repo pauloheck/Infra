@@ -9,8 +9,14 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "32k"
     nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - traduxai-heck.eastus2.cloudapp.azure.com
+      secretName: traduxai-tls
   rules:
     - host: traduxai-heck.eastus2.cloudapp.azure.com
       http:
@@ -21,31 +27,43 @@ spec:
               service:
                 name: traduxai-api
                 port:
-                  number: 80
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: traduxai-web
-                port:
-                  number: 80
-    - host: traduxai.heck.app
-      http:
-        paths:
-          - path: /api/v1
+                  number: 8010
+          - path: /api/docs
             pathType: Prefix
             backend:
               service:
                 name: traduxai-api
                 port:
-                  number: 80
+                  number: 8010
+          - path: /api/redoc
+            pathType: Prefix
+            backend:
+              service:
+                name: traduxai-api
+                port:
+                  number: 8010
+          - path: /api/openapi.json
+            pathType: Prefix
+            backend:
+              service:
+                name: traduxai-api
+                port:
+                  number: 8010
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: traduxai-keycloak
+                port:
+                  number: 8080
           - path: /
             pathType: Prefix
             backend:
               service:
                 name: traduxai-web
                 port:
-                  number: 80
+                  number: 3000
+    # Catch-all sem host: Azure LB health probe (sem Host header)
     - http:
         paths:
           - path: /
@@ -54,4 +72,4 @@ spec:
               service:
                 name: traduxai-web
                 port:
-                  number: 80
+                  number: 3000

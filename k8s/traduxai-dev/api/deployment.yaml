@@ -26,13 +26,10 @@ spec:
               secretProviderClass: traduxai-kv-secrets
       containers:
         - name: api
-          image: ACR_PLACEHOLDER/traduxai-api:latest
+          image: acrheckiodev.azurecr.io/traduxai-api:latest
           ports:
             - containerPort: 8010
               name: http
-          envFrom:
-            - secretRef:
-                name: traduxai-secrets
           env:
             - name: ENVIRONMENT
               value: production
@@ -40,6 +37,18 @@ spec:
               value: traduxai
             - name: TRANSLATOR_REGION
               value: eastus2
+            - name: KEYCLOAK_URL
+              value: http://keycloak.keycloak.svc.cluster.local:8080/auth
+            - name: KEYCLOAK_ISSUER
+              value: https://traduxai-heck.eastus2.cloudapp.azure.com/auth/realms/traduxai
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: traduxai-secrets
+                  key: POSTGRES_URL
+          envFrom:
+            - secretRef:
+                name: traduxai-secrets
           volumeMounts:
             - name: kv-secrets
               mountPath: /mnt/secrets
@@ -65,5 +74,5 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: 750m
-              memory: 768Mi
+              cpu: 1000m
+              memory: 1Gi

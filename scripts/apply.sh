@@ -162,7 +162,7 @@ if [[ "$SKIP_DEPLOY" == "false" && "$SKIP_K8S" == "false" ]]; then
   docker push "$ACR/getchat-ai:latest"
 
   docker build -t "$ACR/getchat-web:latest" \
-    --build-arg NEXT_PUBLIC_API_URL="http://getchat-dev.eastus2.cloudapp.azure.com" \
+    --build-arg NEXT_PUBLIC_API_URL="https://getchat-dev.eastus2.cloudapp.azure.com" \
     "$GETCHAT_DIR/apps/web"
   docker push "$ACR/getchat-web:latest"
 
@@ -244,9 +244,9 @@ echo -e "${GREEN}═════════════════════
 echo -e "${GREEN}  ✅ Infra pronta!${NC}"
 echo ""
 echo -e "${YELLOW}  GetChat:${NC}"
-echo "       Chat  → http://getchat-dev.eastus2.cloudapp.azure.com"
-echo "       Admin → http://getchat-dev.eastus2.cloudapp.azure.com/admin"
-echo "       API   → http://getchat-dev.eastus2.cloudapp.azure.com/api/docs"
+echo "       Chat  → https://getchat-dev.eastus2.cloudapp.azure.com"
+echo "       Admin → https://getchat-dev.eastus2.cloudapp.azure.com/admin"
+echo "       API   → https://getchat-dev.eastus2.cloudapp.azure.com/api/docs"
 echo ""
 echo -e "${YELLOW}  Outros apps (BeeAI / BoviPro / IAI):${NC}"
 echo "       gh workflow run deploy-dev.yml --repo pauloheck/BeeAI"

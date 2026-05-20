@@ -26,7 +26,7 @@ spec:
               secretProviderClass: traduxai-kv-secrets
       containers:
         - name: worker
-          image: ACR_PLACEHOLDER/traduxai-worker:latest
+          image: acrheckiodev.azurecr.io/traduxai-worker:latest
           envFrom:
             - secretRef:
                 name: traduxai-secrets
@@ -44,5 +44,5 @@ spec:
               cpu: 250m
               memory: 512Mi
             limits:
-              cpu: 1500m
-              memory: 1536Mi
+              cpu: 2000m
+              memory: 2Gi
