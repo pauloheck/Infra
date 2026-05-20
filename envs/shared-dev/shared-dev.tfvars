@@ -19,10 +19,10 @@ subnet_data_prefix  = ["10.10.16.0/24"]
 subnet_pe_prefix    = ["10.10.17.0/24"]
 subnet_appgw_prefix = ["10.10.18.0/24"]
 
-# --- AKS (1 nó, sem user pool) -----------------------------------------------
+# --- AKS (2 nós para suportar todos os projetos simultaneamente) ---------------
 kubernetes_version = "1.33"
-system_node_count  = 1
-system_vm_size     = "Standard_D2als_v7" # 2 vCPU / 4 GB RAM — AMD v7, ~$59/mês (vs D2s_v3 $70/mês)
+system_node_count  = 2
+system_vm_size     = "Standard_D4als_v7" # 4 vCPU / 8 GB RAM — AMD v7, ~$112/mês rodando / ~$14/mês parado
 
 # --- PostgreSQL (B1ms compartilhado) -----------------------------------------
 pg_sku        = "B_Standard_B1ms"
